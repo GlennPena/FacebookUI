@@ -1,89 +1,56 @@
 import React, { useState } from 'react';
 
-// initial: optional post object for editing
-// onSubmit: async function(payload) -> saved post or throws
-// onCancel: function
-export default function PostForm({ initial = null, onSubmit, onCancel, submitLabel = 'Save' }) {
-  const [author, setAuthor] = useState(initial ? initial.author : '');
-  const [content, setContent] = useState(initial ? initial.content : '');
-  const [imageUrl, setImageUrl] = useState(initial ? (initial.imageUrl || '') : '');
-  const [errors, setErrors] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
+export default function PostForm({ initial = {}, onSubmit, onCancel, submitLabel = 'Save' }) {
+  const [author, setAuthor] = useState(initial.author || '');
+  const [content, setContent] = useState(initial.content || '');
+  const [imageUrl, setImageUrl] = useState(initial.imageUrl || '');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
 
-  function validateClient() {
-    const errs = [];
-    if (!author || !author.trim()) errs.push('author is required');
-    if (author && author.length > 150) errs.push('author must not exceed 150 characters');
-    if (!content || !content.trim()) errs.push('content is required');
-    if (imageUrl && imageUrl.length > 1000) errs.push('imageUrl must not exceed 1000 characters');
-    return errs;
-  }
-
-  const handleSubmit = async (e) => {
+  const handle = async (e) => {
     e.preventDefault();
-    setErrors([]);
-    const clientErrs = validateClient();
-    if (clientErrs.length) {
-      setErrors(clientErrs);
+    setError('');
+    if (!author.trim()) {
+      setError('Author is required');
       return;
     }
-
-    const payload = {
-      author: author.trim(),
-      content: content.trim(),
-      imageUrl: imageUrl !== '' ? imageUrl.trim() : null
-    };
-
-    setSubmitting(true);
+    setBusy(true);
     try {
-      const saved = await onSubmit(payload);
-      // if onSubmit returns saved object, clear form for create; for edit we let parent close form
-      if (!initial && saved) {
+      await onSubmit({ author: author.trim(), content, imageUrl: imageUrl?.trim() || null });
+      if (!initial.id) {
         setAuthor('');
         setContent('');
         setImageUrl('');
       }
     } catch (err) {
-      // show backend validation messages or thrown message
-      const msg = err && err.message ? err.message : 'Save failed';
-      setErrors([msg]);
+      setError(err.message || 'Failed');
     } finally {
-      setSubmitting(false);
+      setBusy(false);
     }
   };
 
   return (
-    <form className="post-form" onSubmit={handleSubmit}>
-      {errors.length > 0 && (
-        <ul className="error-list">
-          {errors.map((err, i) => <li key={i}>{err}</li>)}
-        </ul>
-      )}
-
+    <form onSubmit={handle}>
       <div className="form-row">
         <label>Author</label>
-        <input value={author} onChange={(e) => setAuthor(e.target.value)} maxLength={150} />
+        <input type="text" value={author} onChange={e => setAuthor(e.target.value)} />
       </div>
 
       <div className="form-row">
         <label>Content</label>
-        <textarea value={content} onChange={(e) => setContent(e.target.value)} rows={4} />
+        <textarea value={content} onChange={e => setContent(e.target.value)} />
       </div>
 
       <div className="form-row">
         <label>Image URL (optional)</label>
-        <input value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
+        <input type="text" value={imageUrl} onChange={e => setImageUrl(e.target.value)} />
       </div>
 
-      <div className="form-actions">
-        <button className="btn" type="submit" disabled={submitting}>
-          {submitting ? 'Saving…' : submitLabel}
-        </button>
-        {onCancel && (
-          <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={submitting}>
-            Cancel
-          </button>
-        )}
+      {error && <div style={{color:'#b91c1c', marginBottom:8}}>{error}</div>}
+
+      <div style={{display:'flex', gap:8}}>
+        <button type="submit" disabled={busy} className="btn btn-primary">{busy ? 'Saving...' : submitLabel}</button>
+        {onCancel && <button type="button" onClick={onCancel} className="btn btn-ghost">Cancel</button>}
       </div>
     </form>
   );
