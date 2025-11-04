@@ -74,8 +74,7 @@ export default function App() {
   return (
     <div className="container">
       <div className="header">
-        <h1>Facebook-like Posts</h1>
-        <div className="small-muted">Simple Vite + React UI</div>
+        <h1>Facebook Posts</h1>
       </div>
 
       <div className="card">
