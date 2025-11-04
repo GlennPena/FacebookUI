@@ -1,5 +1,8 @@
 // Lightweight API client using fetch for /api/posts
-const BASE = '/api/posts';
+const API_BASE =
+  import.meta.env.VITE_API_URL || 'http://localhost:8080/api/posts';
+
+const BASE = API_BASE;
 
 async function handleResponse(res) {
   const content = await res.json().catch(() => null);
