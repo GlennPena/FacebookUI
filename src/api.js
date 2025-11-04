@@ -1,6 +1,6 @@
 // Lightweight API client using fetch for /api/posts
 const API_BASE =
-  import.meta.env.VITE_API_URL || 'http://localhost:8080/api/posts';
+  import.meta.env.VITE_API_URL || 'https://facebook-api-ueki.onrender.com';
 
 const BASE = API_BASE;
 
